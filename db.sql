@@ -78,7 +78,7 @@ CREATE TABLE equipment (
     FOREIGN KEY (Subcategories_id) REFERENCES equipment_subcategories(Subcategory_id)
 );
 
-CREATE TABLE equipment_images (
+CREATE TABLE images (
     image_id INT AUTO_INCREMENT PRIMARY KEY,
     equipment_id INT NOT NULL,
     image_url VARCHAR(255) NOT NULL,
@@ -141,6 +141,12 @@ CREATE TABLE product_orders (
     FOREIGN KEY (delivery_address) REFERENCES user_addresses(address_id)
 );
 
+CREATE TABLE product_images (
+    image_id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    image_url VARCHAR(255) NOT NULL,
+    FOREIGN KEY (product_id) REFERENCES product(product_id)
+);
 CREATE TABLE messages (
     message_id INT AUTO_INCREMENT PRIMARY KEY,
     sender_id INT NOT NULL,
@@ -151,6 +157,8 @@ CREATE TABLE messages (
     FOREIGN KEY (sender_id) REFERENCES users(user_id),
     FOREIGN KEY (receiver_id) REFERENCES users(user_id)
 );
+
+
 
 CREATE TABLE reviews (
     Review_id INT AUTO_INCREMENT PRIMARY KEY,

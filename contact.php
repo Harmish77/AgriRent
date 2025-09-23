@@ -32,15 +32,6 @@ include 'includes/navigation.php';
             Bardoli, Gujarat, India
         </div>
     </div>
-    <div class="info-item">
-        <div class="icon">🕒</div>
-        <div>
-            <strong>Support Hours:</strong><br/>
-            Monday - Friday: 9:00 AM - 6:00 PM<br/>
-            Saturday: 10:00 AM - 4:00 PM<br/>
-            Sunday: Closed
-        </div>
-    </div>
 </div>
 
 <?php include 'includes/footer.php'; ?>

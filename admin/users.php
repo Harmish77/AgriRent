@@ -65,7 +65,7 @@ require 'admin_nav.php';
         <?php if ($users->num_rows > 0): ?>
             <?php while($user = $users->fetch_assoc()): ?>
             <tr>
-                <td>U-<?= $user['user_id'] ?></td>
+                <td><?= $user['user_id'] ?></td>
                 <td><?= $user['Name'] ?></td>
                 <td><?= $user['Email'] ?></td>
                 <td><?= $user['Phone'] ?></td>
@@ -79,7 +79,14 @@ require 'admin_nav.php';
                     <?php endif; ?>
                 </td>
                 <td>
-                    <a href="?delete=<?= $user['user_id'] ?>" onclick="return confirm('Delete this user?')">Delete</a>
+                    <?php if($user['User_type'] == 'O'): ?>
+                        <a href="?delete=<?= $user['user_id'] ?>" onclick="return confirm('Delete this user?')">Delete</a>
+                    <?php elseif($user['User_type'] == 'F'): ?>
+                        <a href="?delete=<?= $user['user_id'] ?>" onclick="return confirm('Delete this user?')">Delete</a>
+                    <?php else: ?>
+                        
+                    <?php endif; ?>
+                    
                 </td>
             </tr>
             <?php endwhile; ?>

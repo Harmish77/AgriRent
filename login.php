@@ -39,7 +39,7 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
                     <input type="checkbox" name="remember">
                     <span>Remember me</span>
                 </label>
-                <a href="forgot_password.php">forgot password?</a>
+                <a href="forgotpassword.php">forgot password?</a>
             </div>
 
             <button type="submit" class="primary-btn" name="btnlogin">Sign in</button>
@@ -50,5 +50,6 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
         </p>
     </section>
 </main>
+
 
 <?php include 'includes/footer.php'; ?>

@@ -5,6 +5,8 @@
         header('Location: index.php');
         exit;
     }
+    
+    
     ?>
     <?php include 'includes/header.php'; ?>
     <?php include 'includes/navigation.php'; ?>
@@ -199,7 +201,7 @@
                            pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
                            placeholder="abc1@agrirent.com"
                            value="<?= isset($_SESSION['email']) ? $_SESSION['email'] : '' ?>"
-                           required>
+                           >
                 </div>
 
                 <div class="input-group">
@@ -266,7 +268,7 @@
                     </div>
                     <label class="checkbox-label">
                         <input type="checkbox" name="agree" required>
-                        <span>I agree to the <a href="terms.php">Terms</a> & <a href="privacy.php">Privacy</a></span>
+                        <span>I agree to the <a href="includes/terms.php">Terms</a> & <a href="includes/privacy.php">Privacy</a></span>
                     </label>
                     <button type="submit" class="primary-btn" name="create_account">Create account</button>
     <?php endif; ?>

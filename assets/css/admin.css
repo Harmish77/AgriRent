@@ -77,6 +77,7 @@ h2 {
 
 h3 {
     color: #4a7c59;
+    margin-top: 15px;
     margin-bottom: 15px;
 }
 
@@ -291,7 +292,7 @@ tr:hover {
 .btn {
     background: #234a23;
     color: #fff;
-    padding: 8px 16px;
+    padding: 8px 20px;
     text-decoration: none;
     border: none;
     border-radius: 4px;
@@ -307,12 +308,12 @@ tr:hover {
 
 /* Links */
 a {
-    color: #234a23;
+    color: #ff2727;
     text-decoration: none;
 }
 
 a:hover {
-    color: #4a7c59;
+    color: #eb0000;
 }
 
 /* Report Sections */

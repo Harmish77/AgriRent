@@ -1,89 +1,126 @@
-<?php session_start(); ?>
-<?php include 'includes/header.php'; ?>
-<?php include 'includes/navigation.php'; ?>
-<?php include 'includes/header-section.php'; ?>
+<?php 
+session_start(); 
+// Enable mysqli error reporting for better debugging
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+require_once 'auth/config.php';
+
+// Check database connection
+if (!$conn) {
+    die('Database connection failed: ' . mysqli_connect_error());
+}
+
+// Fetch 4 recent approved equipment with images
+$equipment_query = "SELECT e.*, u.Name as owner_name, i.image_url, es.Subcategory_name 
+                   FROM equipment e 
+                   JOIN users u ON e.Owner_id = u.user_id 
+                   LEFT JOIN images i ON (i.image_type = 'E' AND i.ID = e.Equipment_id)
+                   LEFT JOIN equipment_subcategories es ON e.Subcategories_id = es.Subcategory_id
+                   WHERE e.Approval_status = 'CON' 
+                   ORDER BY e.listed_date DESC 
+                   LIMIT 4";
+
+try {
+    $equipment_result = $conn->query($equipment_query);
+    $featured_equipment = [];
+    if ($equipment_result && $equipment_result->num_rows > 0) {
+        while ($equip = $equipment_result->fetch_assoc()) {
+            $featured_equipment[] = $equip;
+        }
+    }
+} catch (mysqli_sql_exception $e) {
+    error_log("Equipment query error: " . $e->getMessage());
+    $featured_equipment = [];
+}
+
+// Products query matching your equipment query structure
+$products_query = "SELECT p.*, u.Name as seller_name, i.image_url, 
+                   ps.Subcategory_name, pc.Category_name
+                   FROM product p 
+                   JOIN users u ON p.seller_id = u.user_id 
+                   LEFT JOIN images i ON (i.image_type = 'P' AND i.ID = p.product_id)
+                   LEFT JOIN product_subcategories ps ON p.Subcategory_id = ps.Subcategory_id
+                   LEFT JOIN product_categories pc ON ps.Category_id = pc.Category_id
+                   WHERE p.Approval_status = 'CON' 
+                   ORDER BY p.listed_date DESC 
+                   LIMIT 4";
+
+// Initialize featured_products as empty array
+$featured_products = [];
+
+try {
+    $products_result = $conn->query($products_query);
+    if ($products_result && $products_result->num_rows > 0) {
+        while ($product = $products_result->fetch_assoc()) {
+            $featured_products[] = $product;
+        }
+    }
+} catch (mysqli_sql_exception $e) {
+    error_log("Products query error: " . $e->getMessage());
+    // featured_products remains as empty array
+}
+
+include 'includes/header.php';
+include 'includes/navigation.php';
+include 'includes/header-section.php';
+?>
 
 <!-- Equipment Section -->
 <div class="equipment-section">
     <div class="container">
         <h2>Featured Equipment</h2>
-        <p style="text-align: center; color: #666;">Popular farming equipment available for rent</p>
-
+        <p style="text-align: center; color: #666;">Recently approved farming equipment available for rent</p>
+        
         <div class="equipment-row">
-            <!-- Equipment 1 -->
-            <div class="equipment-card">
-                <div class="equipment-image tractor"></div>
-                <div class="equipment-info">
-                    <h3>Heavy Duty Tractor</h3>
-                    <p><strong>Brand:</strong> Mahindra 575 DI</p>
-                    <p><strong>Year:</strong> 2020</p>
-                    <p><strong>Power:</strong> 75 HP</p>
-                    <p><strong>Location:</strong> Surat, Gujarat</p>
-                    <div class="price-box">
-                        <span class="price">₹1,200/day</span>
-                        <small>₹150/hour</small>
+            <?php if (count($featured_equipment) > 0): ?>
+                <?php foreach ($featured_equipment as $equipment): ?>
+                    <div class="equipment-card">
+                        <div class="equipment-image">
+                            <?php if (!empty($equipment['image_url'])): ?>
+                                <img src="<?= htmlspecialchars($equipment['image_url']) ?>" 
+                                     alt="<?= htmlspecialchars($equipment['Title']) ?>"
+                                     style="width: 100%; height: 210px; object-fit: cover;">
+                            <?php else: ?>
+                                <div style="width: 100%; height: 180px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); display: flex; align-items: center; justify-content: center; color: #666; font-size: 48px;">
+                                    🚜
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="equipment-info">
+                            <h3><?= htmlspecialchars($equipment['Title']) ?></h3>
+                            <p><strong>Brand:</strong> <?= htmlspecialchars($equipment['Brand']) ?></p>
+                            <p><strong>Model:</strong> <?= htmlspecialchars($equipment['Model']) ?></p>
+                            <?php if ($equipment['Year']): ?>
+                                <p><strong>Year:</strong> <?= htmlspecialchars($equipment['Year']) ?></p>
+                            <?php endif; ?>
+                            <p><strong>Category:</strong> <?= htmlspecialchars($equipment['Subcategory_name'] ?? 'N/A') ?></p>
+                            <p><strong>Owner:</strong> <?= htmlspecialchars($equipment['owner_name']) ?></p>
+                            <div class="price-box">
+                                <?php if ($equipment['Daily_rate'] > 0): ?>
+                                    <span class="price">₹<?= number_format($equipment['Daily_rate'], 0) ?>/day</span>
+                                <?php endif; ?>
+                                <?php if ($equipment['Hourly_rate'] > 0): ?>
+                                    <small>₹<?= number_format($equipment['Hourly_rate'], 0) ?>/hour</small>
+                                <?php endif; ?>
+                            </div>
+                            <a class="rent-btn"
+                               href="<?= isset($_SESSION['logged_in']) && $_SESSION['logged_in'] ? 'equipment_details.php?id=' . $equipment['Equipment_id'] : 'login.php' ?>">
+                               Rent Now
+                            </a>
+                        </div>
                     </div>
-                    <a class="rent-btn"
-   href="<?= isset($_SESSION['logged_in']) && $_SESSION['logged_in'] ? 'equipments.php' : 'login.php' ?>">
-   Rent Now
-</a>
-
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 8px; width: 100%;">
+                    <h3 style="color: #666; margin-bottom: 15px;">🚜 No Equipment Available</h3>
+                    <p style="color: #666; margin-bottom: 25px;">Equipment owners can list their farming equipment for rent.</p>
+                    <a href="<?= isset($_SESSION['logged_in']) && $_SESSION['user_type'] == 'O' ? 'owner/add_equipment.php' : 'register.php' ?>" 
+                       style="background: #234a23; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
+                        <?= isset($_SESSION['logged_in']) && $_SESSION['user_type'] == 'O' ? 'List Your Equipment' : 'Join as Equipment Owner' ?>
+                    </a>
                 </div>
-            </div>
-
-            <!-- Equipment 2 -->
-            <div class="equipment-card">
-                <div class="equipment-image harvester"></div>
-                <div class="equipment-info">
-                    <h3>Combine Harvester</h3>
-                    <p><strong>Brand:</strong> John Deere W70</p>
-                    <p><strong>Year:</strong> 2019</p>
-                    <p><strong>Type:</strong> Self-Propelled</p>
-                    <p><strong>Location:</strong> Rajkot, Gujarat</p>
-                    <div class="price-box">
-                        <span class="price">₹2,500/day</span>
-                        <small>₹300/hour</small>
-                    </div>
-                    <button class="rent-btn">Rent Now</button>
-                </div>
-            </div>
-
-            <!-- Equipment 3 -->
-            <div class="equipment-card">
-                <div class="equipment-image tiller"></div>
-                <div class="equipment-info">
-                    <h3>Rotary Tiller</h3>
-                    <p><strong>Brand:</strong> Fieldking</p>
-                    <p><strong>Year:</strong> 2021</p>
-                    <p><strong>Width:</strong> 8 Feet</p>
-                    <p><strong>Location:</strong> Anand, Gujarat</p>
-                    <div class="price-box">
-                        <span class="price">₹800/day</span>
-                        <small>₹100/hour</small>
-                    </div>
-                    <button class="rent-btn">Rent Now</button>
-                </div>
-            </div>
-
-            <!-- Equipment 4 -->
-            <div class="equipment-card">
-                <div class="equipment-image tractor2"></div>
-                <div class="equipment-info">
-                    <h3>Heavy Duty Tractor</h3>
-                    <p><strong>Brand:</strong> Mahindra 575 DI</p>
-                    <p><strong>Year:</strong> 2020</p>
-                    <p><strong>Power:</strong> 75 HP</p>
-                    <p><strong>Location:</strong> Surat, Gujarat</p>
-                    <div class="price-box">
-                        <span class="price">₹1,200/day</span>
-                        <small>₹150/hour</small>
-                    </div>
-                    <button class="rent-btn">Rent Now</button>
-                </div>
-            </div>
+            <?php endif; ?>
         </div>
-
-
+        
         <div style="text-align: center; margin-top: 30px;">
             <a href="equipments.php" class="view-all-btn">View All Equipment</a>
         </div>
@@ -95,81 +132,55 @@
     <div class="container">
         <h2>Farm Supplies & Products</h2>
         <p style="text-align: center; color: #666;">Quality agricultural products and supplies</p>
-
+        
         <div class="products-row">
-            <!-- Product 1 -->
-            <div class="product-card">
-                <div class="product-image seeds"></div>                
-                <div class="product-info">
-                    <h3>Hybrid Wheat Seeds</h3>
-                    <p><strong>Variety:</strong> HD-2967</p>
-                    <p><strong>Quality:</strong> Premium Grade</p>
-                    <p><strong>Quantity:</strong> 50 Kg Bag</p>
-                    <p><strong>Seller:</strong> Anand Seeds Co.</p>
-                    <div class="price-box">
-                        <span class="price">₹2,500/bag</span>
-                        <small>₹50/kg</small>
+            <?php if (count($featured_products) > 0): ?>
+                <?php foreach ($featured_products as $product): ?>
+                    <div class="equipment-card">
+                        <div class="equipment-image">
+                            <?php if (!empty($product['image_url'])): ?>
+                                <img src="<?= htmlspecialchars($product['image_url']) ?>" 
+                                     alt="<?= htmlspecialchars($product['Name']) ?>"
+                                     style="width: 100%; height: 210px; object-fit: cover;">
+                            <?php else: ?>
+                                <div style="width: 100%; height: 180px; background: linear-gradient(135deg, #e8f5e8 0%, #a8e6a8 100%); display: flex; align-items: center; justify-content: center; color: #666; font-size: 48px;">
+                                    📦
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="equipment-info">
+                            <h3><?= htmlspecialchars($product['Name']) ?></h3>
+                            <p><strong>Category:</strong> <?= htmlspecialchars($product['Category_name'] ?? 'N/A') ?></p>
+                            <p><strong>Type:</strong> <?= htmlspecialchars($product['Subcategory_name'] ?? 'N/A') ?></p>
+                            <p><strong>Seller:</strong> <?= htmlspecialchars($product['seller_name']) ?></p>
+                            <p><strong>Available:</strong> <?= number_format($product['Quantity'], 1) ?> <?= strtoupper($product['Unit']) ?></p>
+                            <div class="price-box">
+                                <span class="price">₹<?= number_format($product['Price'], 2) ?>/<?= strtoupper($product['Unit']) ?></span>
+                            </div>
+                            <a class="rent-btn"
+                               href="<?= isset($_SESSION['logged_in']) && $_SESSION['logged_in'] ? 'product_details.php?id=' . $product['product_id'] : 'login.php' ?>">
+                               Buy Now
+                            </a>
+                        </div>
                     </div>
-                    <a class="buy-btn"href="<?= isset($_SESSION['logged_in']) && $_SESSION['logged_in'] ? 'products.php' : 'login.php' ?>">Buy Now</a>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 8px; width: 100%;">
+                    <h3 style="color: #666; margin-bottom: 15px;">📦 No Products Available</h3>
+                    <p style="color: #666; margin-bottom: 25px;">Sellers can list their agricultural products here.</p>
+                    <a href="<?= isset($_SESSION['logged_in']) && $_SESSION['user_type'] == 'S' ? 'seller/add_product.php' : 'register.php' ?>" 
+                       style="background: #234a23; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
+                        <?= isset($_SESSION['logged_in']) && $_SESSION['user_type'] == 'S' ? 'List Your Products' : 'Join as Seller' ?>
+                    </a>
                 </div>
-            </div>
-
-            <!-- Product 2 -->
-            <div class="product-card">
-                <div style="width: 100%; height: 180px; background: #ddd; display: flex; align-items: center; justify-content: center; color: #666;">Product Image</div>
-                <div class="product-info">
-                    <h3>Organic Fertilizer</h3>
-                    <p><strong>Type:</strong> NPK 19:19:19</p>
-                    <p><strong>Brand:</strong> FarmGrow</p>
-                    <p><strong>Quantity:</strong> 25 Kg Bag</p>
-                    <p><strong>Seller:</strong> Gujarat Agro</p>
-                    <div class="price-box">
-                        <span class="price">₹1,200/bag</span>
-                        <small>₹48/kg</small>
-                    </div>
-                    <button class="buy-btn">Buy Now</button>
-                </div>
-            </div>
-
-            <!-- Product 3 -->
-            <div class="product-card">
-                <div style="width: 100%; height: 180px; background: #ddd; display: flex; align-items: center; justify-content: center; color: #666;">Product Image</div>
-                <div class="product-info">
-                    <h3>Plant Protection</h3>
-                    <p><strong>Type:</strong> Insecticide</p>
-                    <p><strong>Brand:</strong> CropSafe</p>
-                    <p><strong>Quantity:</strong> 1 Liter</p>
-                    <p><strong>Seller:</strong> AgriCare Ltd</p>
-                    <div class="price-box">
-                        <span class="price">₹450/liter</span>
-                        <small>Concentrated</small>
-                    </div>
-                    <button class="buy-btn">Buy Now</button>
-                </div>
-            </div>
-
-            <!-- Product 4 -->
-            <div class="product-card">
-                <div style="width: 100%; height: 180px; background: #ddd; display: flex; align-items: center; justify-content: center; color: #666;">Product Image</div>
-                <div class="product-info">
-                    <h3>Farming Tools Set</h3>
-                    <p><strong>Items:</strong> 5 Piece Set</p>
-                    <p><strong>Material:</strong> Steel</p>
-                    <p><strong>Brand:</strong> FarmPro</p>
-                    <p><strong>Seller:</strong> Tool Mart</p>
-                    <div class="price-box">
-                        <span class="price">₹2,800/set</span>
-                        <small>Complete Kit</small>
-                    </div>
-                    <button class="buy-btn">Buy Now</button>
-                </div>
-            </div>
+            <?php endif; ?>
         </div>
-
+        
         <div style="text-align: center; margin-top: 30px;">
             <a href="products.php" class="view-all-btn">View All Products</a>
         </div>
     </div>
 </div>
+
 
 <?php include 'includes/footer.php'; ?>

@@ -1,5 +1,5 @@
 <div class="sidebar">
-    <h2>Admin Panel</h2>
+    
     <a href="../index.php">Home</a>
     <a href="dashboard.php">Dashboard</a>
     <a href="users.php">Users</a>

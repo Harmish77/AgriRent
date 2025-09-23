@@ -4,13 +4,21 @@
         <button class="mobile-menu" id="mobile-menu">☰</button>
         <div class="nav-links" id="nav-links">
             <a href="index.php">Home</a>
-            <a href="<?= isset($_SESSION['logged_in']) && $_SESSION['logged_in'] ? 'equipments.php' : 'login.php' ?>">Equipment</a>
-            <a href="<?= isset($_SESSION['logged_in']) && $_SESSION['logged_in'] ? 'products.php' : 'login.php' ?>">Products</a>
+            <a href="equipments.php">Equipment</a>
+            <a href="products.php">Products</a>
             <a href="about.php">About</a>
             <a href="contact.php">Contact</a>
             <?php if (!empty($_SESSION['logged_in'])): ?>
                 <div class="dropdown">
-                    <button class="dropdown-toggle">Profile &#x25BC;</button>
+                    <button class="dropdown-toggle">
+                        <div class="user-avatar">
+                            <?= strtoupper(substr($_SESSION['user_name'] ?? 'U', 0, 1)) ?>
+                        </div>
+                        <div class="user-info">
+                            <span class="username"><?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?></span>
+                            <span class="user-dropdown-arrow">▼</span>
+                        </div>
+                    </button>
                     <div class="dropdown-menu">
                         <a href="account.php">Account</a>
                         <a href="<?php
